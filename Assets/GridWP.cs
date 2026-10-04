@@ -191,56 +191,53 @@ void LateUpdate()
 List<Node> BFS(Node start, Node end)
 {
     Queue<Node> toVisit = new Queue<Node>();
-    HashSet<Node> visited = new HashSet<Node>();
+    List<Node> visited = new List<Node>();
+
+    Node currentNode = start;
+    currentNode.Depth = 0;
+    toVisit.Enqueue(currentNode);
+
     List<Node> finalPath = new List<Node>();
 
-    start.Depth = 0;
-    toVisit.Enqueue(start);
-    visited.Add(start);
-
-    while (toVisit.Count > 0)
+    while(toVisit.Count > 0)
     {
-        Node currentNode = toVisit.Dequeue();
+        currentNode = toVisit.Dequeue();
+
+        if (visited.Contains(currentNode))
+            continue;
+
+        visited.Add(currentNode);
 
         if (currentNode.Equals(end))
         {
-            // Backtrack using Depth
-            Node curr = currentNode;
-            while (curr != null)
+            while (currentNode.Depth != 0)
             {
-                finalPath.Add(curr);
-                if (curr.Depth == 0)
-                    break;
-
-                Node prev = null;
-                foreach (Node n in curr.Neighbors)
+                foreach(Node n in currentNode.Neighbors)
                 {
-                    if (n.Depth == curr.Depth - 1)
+                    if (n.Depth == currentNode.Depth-1)
                     {
-                        prev = n;
+                        finalPath.Add(currentNode);
+                        currentNode = n;
                         break;
                     }
                 }
-
-                curr = prev;
             }
-
             finalPath.Reverse();
-            return finalPath;
+            break;
         }
-
-        foreach (Node n in currentNode.Neighbors)
+        else
         {
-            if (!visited.Contains(n) && n.Walkable)
+            foreach (Node n in currentNode.Neighbors)
             {
-                n.Depth = currentNode.Depth + 1;
-                visited.Add(n);          // mark when enqueuing
-                toVisit.Enqueue(n);
+                if (!visited.Contains(n) && n.Walkable)
+                {
+                    n.Depth = currentNode.Depth+1;
+                    toVisit.Enqueue(n);
+                }
             }
         }
     }
-
-    return finalPath; // empty if no path
+    return finalPath;
 }
 
 }
