@@ -191,44 +191,53 @@ public class GridWP : MonoBehaviour
     List<Node> BFS(Node start, Node end)
     {
         Queue<Node> toVisit = new Queue<Node>();
-        HashSet<Node> visited = new HashSet<Node>();
-        Dictionary<Node, Node> parentMap = new Dictionary<Node, Node>();
-        List<Node> finalPath = new List<Node>();
+        List<Node> visited = new List<Node>();
 
-        toVisit.Enqueue(start);
-        visited.Add(start);
-        // start has no parent
+        Node currentNode = start;
+        currentNode.Depth = 0;
+        toVisit.Enqueue(currentNode);
+
+        List<Node> finalPath = new List<Node>();
 
         while (toVisit.Count > 0)
         {
-            Node currentNode = toVisit.Dequeue();
+            currentNode = toVisit.Dequeue();
+
+            if (visited.Contains(currentNode))
+                continue;
+
+            visited.Add(currentNode);
 
             if (currentNode.Equals(end))
             {
-                // Reconstruct path using parentMap
-                Node curr = end;
-                while (curr != null)
+                while (currentNode.Depth != 0)
                 {
-                    finalPath.Add(curr);
-                    parentMap.TryGetValue(curr, out curr); // curr becomes its parent or null
+                    foreach (Node n in currentNode.Neighbors)
+                    {
+                        if (n.Depth == currentNode.Depth - 1)
+                        {
+                            finalPath.Add(currentNode);
+                            currentNode = n;
+                            break;
+                        }
+                    }
                 }
 
                 finalPath.Reverse();
-                return finalPath;
+                break;
             }
 
             foreach (Node n in currentNode.Neighbors)
             {
-                if (n.Walkable && !visited.Contains(n))
+                if (!visited.Contains(n) && n.Walkable)
                 {
-                    visited.Add(n);
-                    parentMap[n] = currentNode;
+                    n.Depth = currentNode.Depth + 1;
                     toVisit.Enqueue(n);
                 }
             }
         }
 
-        return finalPath; // empty if no path
+        return finalPath;
     }
 
 }
