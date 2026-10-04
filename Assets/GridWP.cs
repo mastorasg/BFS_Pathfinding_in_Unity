@@ -191,53 +191,44 @@ void LateUpdate()
 List<Node> BFS(Node start, Node end)
 {
     Queue<Node> toVisit = new Queue<Node>();
-    List<Node> visited = new List<Node>();
-
-    Node currentNode = start;
-    currentNode.Depth = 0;
-    toVisit.Enqueue(currentNode);
-
+    HashSet<Node> visited = new HashSet<Node>();
+    Dictionary<Node, Node> parentMap = new Dictionary<Node, Node>();
     List<Node> finalPath = new List<Node>();
 
-    while(toVisit.Count > 0)
+    toVisit.Enqueue(start);
+    visited.Add(start);
+    // start has no parent
+
+    while (toVisit.Count > 0)
     {
-        currentNode = toVisit.Dequeue();
-
-        if (visited.Contains(currentNode))
-            continue;
-
-        visited.Add(currentNode);
+        Node currentNode = toVisit.Dequeue();
 
         if (currentNode.Equals(end))
         {
-            while (currentNode.Depth != 0)
+            // Reconstruct path using parentMap
+            Node curr = end;
+            while (curr != null)
             {
-                foreach(Node n in currentNode.Neighbors)
-                {
-                    if (n.Depth == currentNode.Depth-1)
-                    {
-                        finalPath.Add(currentNode);
-                        currentNode = n;
-                        break;
-                    }
-                }
+                finalPath.Add(curr);
+                parentMap.TryGetValue(curr, out curr); // curr becomes its parent or null
             }
+
             finalPath.Reverse();
-            break;
+            return finalPath;
         }
-        else
+
+        foreach (Node n in currentNode.Neighbors)
         {
-            foreach (Node n in currentNode.Neighbors)
+            if (n.Walkable && !visited.Contains(n))
             {
-                if (!visited.Contains(n) && n.Walkable)
-                {
-                    n.Depth = currentNode.Depth+1;
-                    toVisit.Enqueue(n);
-                }
+                visited.Add(n);
+                parentMap[n] = currentNode;
+                toVisit.Enqueue(n);
             }
         }
     }
-    return finalPath;
+
+    return finalPath; // empty if no path
 }
 
 }
