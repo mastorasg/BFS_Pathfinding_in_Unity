@@ -191,53 +191,56 @@ void LateUpdate()
 List<Node> BFS(Node start, Node end)
 {
     Queue<Node> toVisit = new Queue<Node>();
-    List<Node> visited = new List<Node>();
-
-    Node currentNode = start;
-    currentNode.Depth = 0;
-    toVisit.Enqueue(currentNode);
-
+    HashSet<Node> visited = new HashSet<Node>();
     List<Node> finalPath = new List<Node>();
 
-    while(toVisit.Count > 0)
+    start.Depth = 0;
+    toVisit.Enqueue(start);
+    visited.Add(start);
+
+    while (toVisit.Count > 0)
     {
-        currentNode = toVisit.Dequeue();
-
-        if (visited.Contains(currentNode))
-            continue;
-
-        visited.Add(currentNode);
+        Node currentNode = toVisit.Dequeue();
 
         if (currentNode.Equals(end))
         {
-            while (currentNode.Depth != 0)
+            // Backtrack using Depth
+            Node curr = currentNode;
+            while (curr != null)
             {
-                foreach(Node n in currentNode.Neighbors)
+                finalPath.Add(curr);
+                if (curr.Depth == 0)
+                    break;
+
+                Node prev = null;
+                foreach (Node n in curr.Neighbors)
                 {
-                    if (n.Depth == currentNode.Depth-1)
+                    if (n.Depth == curr.Depth - 1)
                     {
-                        finalPath.Add(currentNode);
-                        currentNode = n;
+                        prev = n;
                         break;
                     }
                 }
+
+                curr = prev;
             }
+
             finalPath.Reverse();
-            break;
+            return finalPath;
         }
-        else
+
+        foreach (Node n in currentNode.Neighbors)
         {
-            foreach (Node n in currentNode.Neighbors)
+            if (!visited.Contains(n) && n.Walkable)
             {
-                if (!visited.Contains(n) && n.Walkable)
-                {
-                    n.Depth = currentNode.Depth+1;
-                    toVisit.Enqueue(n);
-                }
+                n.Depth = currentNode.Depth + 1;
+                visited.Add(n);          // mark when enqueuing
+                toVisit.Enqueue(n);
             }
         }
     }
-    return finalPath;
+
+    return finalPath; // empty if no path
 }
 
 }
