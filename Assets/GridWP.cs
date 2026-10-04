@@ -22,127 +22,127 @@ public class GridWP : MonoBehaviour
     Node startNode;
     Node endNode;
 
-List<Node> getAdjacentNodes(Node[,] m, int i, int j)
-{
-    List<Node> l = new List<Node>();
-    // node up
-    if (i-1 >= 0)
-        if (m[i-1, j].Walkable)
-        {
-        l.Add(m[i - 1, j]);
-        }
-
-    // node down
-    if (i+1 < m.GetLength(0))
-        if (m[i + 1, j].Walkable)
-        {
-        l.Add(m[i + 1, j]);
-        }
-
-    // node left
-    if (j-1 >= 0)
-        if (m[i, j - 1].Walkable)
-        {
-        l.Add(m[i, j-1]);
-        }
-
-    // node right
-    if (j+1 < m.GetLength(1))
-        if (m[i, j + 1].Walkable)
-        {
-        l.Add(m[i, j+1]);
-        }
-
-    return l;
-}
-
-void Start()
-{
-// create grid
-    grid = new Node[,] {
-        { new Node(), new Node(), new Node(false),
-        new Node(), new Node(), new Node() },
-        { new Node(), new Node(false), new Node(),
-        new Node(), new Node(), new Node() },
-        { new Node(), new Node(false), new Node(),
-        new Node(), new Node(), new Node() },
-        { new Node(), new Node(), new Node(),
-        new Node(false), new Node(), new Node() },
-        { new Node(), new Node(), new Node(),
-        new Node(), new Node(false), new Node() },
-        { new Node(), new Node(), new Node(false),
-        new Node(), new Node(false), new Node() },
-        { new Node(), new Node(false), new Node(false),
-        new Node(), new Node(), new Node() }
-    };
-    // initialize grid points
-    for (int i = 0; i < grid.GetLength(0); i++)
+    List<Node> getAdjacentNodes(Node[,] m, int i, int j)
     {
-        for (int j = 0; j < grid.GetLength(1); j++)
-        {
-        grid[i, j].Waypoint = Instantiate(prefabWaypoint,
-        new Vector3(i * spacing, this.transform.position.y,
-        j * spacing), Quaternion.identity);
-
-            if (!grid[i, j].Walkable)
+        List<Node> l = new List<Node>();
+        // node up
+        if (i-1 >= 0)
+            if (m[i-1, j].Walkable)
             {
-                grid[i, j].Waypoint.GetComponent<Renderer>().material = wallMat;
+            l.Add(m[i - 1, j]);
             }
-            else
+
+        // node down
+        if (i+1 < m.GetLength(0))
+            if (m[i + 1, j].Walkable)
             {
-                grid[i, j].Neighbors = getAdjacentNodes(grid, i, j);
+            l.Add(m[i + 1, j]);
+            }
+
+        // node left
+        if (j-1 >= 0)
+            if (m[i, j - 1].Walkable)
+            {
+            l.Add(m[i, j-1]);
+            }
+
+        // node right
+        if (j+1 < m.GetLength(1))
+            if (m[i, j + 1].Walkable)
+            {
+            l.Add(m[i, j+1]);
+            }
+
+        return l;
+    }
+
+    void Start()
+    {
+    // create grid
+        grid = new Node[,] {
+            { new Node(), new Node(), new Node(false),
+            new Node(), new Node(), new Node() },
+            { new Node(), new Node(false), new Node(),
+            new Node(), new Node(), new Node() },
+            { new Node(), new Node(false), new Node(),
+            new Node(), new Node(), new Node() },
+            { new Node(), new Node(), new Node(),
+            new Node(false), new Node(), new Node() },
+            { new Node(), new Node(), new Node(),
+            new Node(), new Node(false), new Node() },
+            { new Node(), new Node(), new Node(false),
+            new Node(), new Node(false), new Node() },
+            { new Node(), new Node(false), new Node(false),
+            new Node(), new Node(), new Node() }
+        };
+        // initialize grid points
+        for (int i = 0; i < grid.GetLength(0); i++)
+        {
+            for (int j = 0; j < grid.GetLength(1); j++)
+            {
+            grid[i, j].Waypoint = Instantiate(prefabWaypoint,
+            new Vector3(i * spacing, this.transform.position.y,
+            j * spacing), Quaternion.identity);
+
+                if (!grid[i, j].Walkable)
+                {
+                    grid[i, j].Waypoint.GetComponent<Renderer>().material = wallMat;
+                }
+                else
+                {
+                    grid[i, j].Neighbors = getAdjacentNodes(grid, i, j);
+                }
+            }
+        }
+        startNode = grid[0, 0];
+        endNode = grid[0, 5];
+        startNode.Walkable = true;
+        endNode.Walkable = true;
+        endNode.Waypoint.GetComponent<Renderer>().material = goalMat;
+
+        this.transform.position = new Vector3(startNode.
+        Waypoint.transform.position.x, this.transform.
+        position.y, startNode.Waypoint.transform.position.z);
+    }
+
+    void LateUpdate()
+    {
+        // calculate the shortest path when the return key is pressed
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            this.transform.position = new Vector3(startNode.Waypoint.transform.position.x, this.transform.position.y, startNode.Waypoint.transform.position.z);
+            curNode = 0;
+            path = BFS(startNode, endNode);
+            // path.Add(grid[0,1]);
+            // path.Add(grid[1,0]);
+            // path.Add(grid[2,0]);
+            // path.Add(endNode);
+        }
+        
+        // if there's no path, do nothing
+        if (path.Count == 0) return;
+        
+        // set the goal position
+        goal = new Vector3(path[curNode].Waypoint.transform.position.x, this.transform.position.y, path[curNode].Waypoint.transform.position.z);
+        
+        // set the direction
+        Vector3 direction = goal - this.transform.position;
+        
+        // move toward the goal or increase the counter to 
+        // set another goal in the next iteration
+        if (direction.magnitude > accuracy)
+        {
+            this.transform.rotation = Quaternion.Slerp(this.transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * rotSpeed);
+            this.transform.Translate(0, 0, speed * Time.deltaTime);
+        }
+        else
+        {
+            if (curNode < path.Count - 1)
+            {
+            curNode++;
             }
         }
     }
-    startNode = grid[0, 0];
-    endNode = grid[0, 5];
-    startNode.Walkable = true;
-    endNode.Walkable = true;
-    endNode.Waypoint.GetComponent<Renderer>().material = goalMat;
-
-    this.transform.position = new Vector3(startNode.
-    Waypoint.transform.position.x, this.transform.
-    position.y, startNode.Waypoint.transform.position.z);
-}
-
-void LateUpdate()
-{
-    // calculate the shortest path when the return key is pressed
-    if (Input.GetKeyDown(KeyCode.Return))
-    {
-        this.transform.position = new Vector3(startNode.Waypoint.transform.position.x, this.transform.position.y, startNode.Waypoint.transform.position.z);
-        curNode = 0;
-        path = BFS(startNode, endNode);
-        // path.Add(grid[0,1]);
-        // path.Add(grid[1,0]);
-        // path.Add(grid[2,0]);
-        // path.Add(endNode);
-    }
-    
-    // if there's no path, do nothing
-    if (path.Count == 0) return;
-    
-    // set the goal position
-    goal = new Vector3(path[curNode].Waypoint.transform.position.x, this.transform.position.y, path[curNode].Waypoint.transform.position.z);
-    
-    // set the direction
-    Vector3 direction = goal - this.transform.position;
-    
-    // move toward the goal or increase the counter to 
-    // set another goal in the next iteration
-    if (direction.magnitude > accuracy)
-    {
-        this.transform.rotation = Quaternion.Slerp(this.transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * rotSpeed);
-        this.transform.Translate(0, 0, speed * Time.deltaTime);
-    }
-    else
-    {
-        if (curNode < path.Count - 1)
-        {
-        curNode++;
-        }
-    }
-}
 
 
     public class Node
@@ -188,48 +188,48 @@ void LateUpdate()
     }
 
 
-List<Node> BFS(Node start, Node end)
-{
-    Queue<Node> toVisit = new Queue<Node>();
-    HashSet<Node> visited = new HashSet<Node>();
-    Dictionary<Node, Node> parentMap = new Dictionary<Node, Node>();
-    List<Node> finalPath = new List<Node>();
-
-    toVisit.Enqueue(start);
-    visited.Add(start);
-    // start has no parent
-
-    while (toVisit.Count > 0)
+    List<Node> BFS(Node start, Node end)
     {
-        Node currentNode = toVisit.Dequeue();
+        Queue<Node> toVisit = new Queue<Node>();
+        HashSet<Node> visited = new HashSet<Node>();
+        Dictionary<Node, Node> parentMap = new Dictionary<Node, Node>();
+        List<Node> finalPath = new List<Node>();
 
-        if (currentNode.Equals(end))
+        toVisit.Enqueue(start);
+        visited.Add(start);
+        // start has no parent
+
+        while (toVisit.Count > 0)
         {
-            // Reconstruct path using parentMap
-            Node curr = end;
-            while (curr != null)
+            Node currentNode = toVisit.Dequeue();
+
+            if (currentNode.Equals(end))
             {
-                finalPath.Add(curr);
-                parentMap.TryGetValue(curr, out curr); // curr becomes its parent or null
+                // Reconstruct path using parentMap
+                Node curr = end;
+                while (curr != null)
+                {
+                    finalPath.Add(curr);
+                    parentMap.TryGetValue(curr, out curr); // curr becomes its parent or null
+                }
+
+                finalPath.Reverse();
+                return finalPath;
             }
 
-            finalPath.Reverse();
-            return finalPath;
-        }
-
-        foreach (Node n in currentNode.Neighbors)
-        {
-            if (n.Walkable && !visited.Contains(n))
+            foreach (Node n in currentNode.Neighbors)
             {
-                visited.Add(n);
-                parentMap[n] = currentNode;
-                toVisit.Enqueue(n);
+                if (n.Walkable && !visited.Contains(n))
+                {
+                    visited.Add(n);
+                    parentMap[n] = currentNode;
+                    toVisit.Enqueue(n);
+                }
             }
         }
+
+        return finalPath; // empty if no path
     }
-
-    return finalPath; // empty if no path
-}
 
 }
 
