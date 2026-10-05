@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements.Experimental;
+using UnityEngine.InputSystem;
 
 public class GridWP : MonoBehaviour
 {
@@ -108,7 +108,7 @@ public class GridWP : MonoBehaviour
     void LateUpdate()
     {
         // calculate the shortest path when the return key is pressed
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
         {
             this.transform.position = new Vector3(startNode.Waypoint.transform.position.x, this.transform.position.y, startNode.Waypoint.transform.position.z);
             curNode = 0;
